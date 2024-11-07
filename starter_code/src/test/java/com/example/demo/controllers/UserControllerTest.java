@@ -7,14 +7,17 @@ import com.example.demo.model.persistence.repositories.UserRepository;
 import com.example.demo.model.requests.CreateUserRequest;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.context.annotation.Bean;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
+import java.util.Optional;
+
+import static com.example.demo.TestUtils.createUser;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+
 
 public class UserControllerTest {
 
@@ -30,6 +33,9 @@ public class UserControllerTest {
         TestUtils.injectObject(userController,"userRepository",userRepository);
         TestUtils.injectObject(userController,"cartRepository",cartRepository);
         TestUtils.injectObject(userController,"bCryptPasswordEncoder",bCryptPasswordEncoder);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(createUser()));
+
+        when(userRepository.findByUsername("test")).thenReturn(createUser());
 
     }
     @Test
@@ -49,6 +55,30 @@ public class UserControllerTest {
         assertEquals(0, user.getId());
         assertEquals("test", user.getUsername());
         assertEquals("thisIsHashsed",user.getPassword());
+    }
+
+    @Test
+    public void testRetrieveUserById(){
+        Long id = 1L;
+        ResponseEntity<User> responseEntity = userController.findById(id);
+        assertNotNull(responseEntity);
+        assertEquals(200, responseEntity.getStatusCodeValue());
+        User user2 = responseEntity.getBody();
+        assertNotNull(user2);
+        assertEquals(id, Long.valueOf(user2.getId()));
+        assertEquals("test", user2.getUsername());
+        assertEquals("testPassword", user2.getPassword());
+    }
+    @Test
+    public void testRetrieveUserByName(){
+        ResponseEntity<User> responseEntity = userController.findByUserName("test");
+        assertNotNull(responseEntity);
+        assertEquals(200, responseEntity.getStatusCodeValue());
+        User user2 = responseEntity.getBody();
+        assertNotNull(user2);
+        assertEquals(1L, user2.getId());
+        assertEquals("test", user2.getUsername());
+        assertEquals("testPassword", user2.getPassword());
     }
 }
 
