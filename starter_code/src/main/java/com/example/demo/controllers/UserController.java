@@ -1,7 +1,8 @@
 package com.example.demo.controllers;
 
-import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,6 +32,8 @@ public class UserController {
 	@Autowired
 	private BCryptPasswordEncoder bCryptPasswordEncoder;
 
+	private static Logger logger = LoggerFactory.getLogger(UserController.class);
+
 	@GetMapping("/id/{id}")
 	public ResponseEntity<User> findById(@PathVariable Long id) {
 		return ResponseEntity.of(userRepository.findById(id));
@@ -38,14 +41,19 @@ public class UserController {
 	
 	@GetMapping("/{username}")
 	public ResponseEntity<User> findByUserName(@PathVariable String username) {
+		logger.info("Entering findByUserName: " + username);
 		User user = userRepository.findByUsername(username);
+		logger.info("Exiting findByUserName: " + username);
+
 		return user == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(user);
 	}
 	
 	@PostMapping("/create")
 	public ResponseEntity<User> createUser(@RequestBody CreateUserRequest createUserRequest) {
+		logger.info("Entering create user: " + createUserRequest.getUsername());
 		if(createUserRequest.getPassword().length()< 7 ||
 		 !createUserRequest.getPassword().equals(createUserRequest.getConfirmPassword())){
+			logger.error("Error creating user:"+ createUserRequest.getUsername()+ " password are not matching");
 			return ResponseEntity.badRequest().build();
 		}
 		User user = new User();
@@ -55,6 +63,7 @@ public class UserController {
 		cartRepository.save(cart);
 		user.setCart(cart);
 		userRepository.save(user);
+		logger.info("Exit create user successfully: " + createUserRequest.getUsername());
 		return ResponseEntity.ok(user);
 	}
 	
