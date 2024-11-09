@@ -41,30 +41,34 @@ public class UserController {
 	
 	@GetMapping("/{username}")
 	public ResponseEntity<User> findByUserName(@PathVariable String username) {
-		logger.info("Entering findByUserName: " + username);
+		logger.info("FIND_USER Entering: " + username);
 		User user = userRepository.findByUsername(username);
-		logger.info("Exiting findByUserName: " + username);
-
+		logger.info("FIND_USER Exiting successfully: " + username);
 		return user == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(user);
 	}
 	
 	@PostMapping("/create")
 	public ResponseEntity<User> createUser(@RequestBody CreateUserRequest createUserRequest) {
-		logger.info("Entering create user: " + createUserRequest.getUsername());
-		if(createUserRequest.getPassword().length()< 7 ||
-		 !createUserRequest.getPassword().equals(createUserRequest.getConfirmPassword())){
-			logger.error("Error creating user:"+ createUserRequest.getUsername()+ " password are not matching");
-			return ResponseEntity.badRequest().build();
+		try {
+			logger.info("CREATE_USER Entering: " + createUserRequest.getUsername());
+			if (createUserRequest.getPassword().length() < 7 ||
+					!createUserRequest.getPassword().equals(createUserRequest.getConfirmPassword())) {
+				logger.error("CREATE_USER Error: " + createUserRequest.getUsername() + " password are not matching");
+				return ResponseEntity.badRequest().build();
+			}
+			User user = new User();
+			user.setUsername(createUserRequest.getUsername());
+			user.setPassword(bCryptPasswordEncoder.encode(createUserRequest.getPassword()));
+			Cart cart = new Cart();
+			cartRepository.save(cart);
+			user.setCart(cart);
+			userRepository.save(user);
+			logger.info("CREATE_USER Exit successfully: " + createUserRequest.getUsername());
+			return ResponseEntity.ok(user);
+		} catch(Exception ex){
+			logger.error("CREATE_USER Exception ", ex.getMessage());
+			return (ResponseEntity<User>) ResponseEntity.status(HttpStatus.BAD_REQUEST);
 		}
-		User user = new User();
-		user.setUsername(createUserRequest.getUsername());
-		user.setPassword(bCryptPasswordEncoder.encode(createUserRequest.getPassword()));
-		Cart cart = new Cart();
-		cartRepository.save(cart);
-		user.setCart(cart);
-		userRepository.save(user);
-		logger.info("Exit create user successfully: " + createUserRequest.getUsername());
-		return ResponseEntity.ok(user);
 	}
 	
 }

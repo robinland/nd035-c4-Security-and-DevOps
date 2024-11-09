@@ -3,6 +3,8 @@ package com.example.demo.controllers;
 import java.util.Optional;
 import java.util.stream.IntStream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,38 +33,48 @@ public class CartController {
 	
 	@Autowired
 	private ItemRepository itemRepository;
+
+	private static Logger logger = LoggerFactory.getLogger(CartController.class);
 	
 	@PostMapping("/addToCart")
 	public ResponseEntity<Cart> addTocart(@RequestBody ModifyCartRequest request) {
+		logger.info("ADD_CART entering: " + request.getUsername());
 		User user = userRepository.findByUsername(request.getUsername());
 		if(user == null) {
+			logger.error("ADD_CART ERROR username not found" + user.getUsername());
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
 		}
 		Optional<Item> item = itemRepository.findById(request.getItemId());
 		if(!item.isPresent()) {
+			logger.error("ADD_CART ERROR item not found " + user.getUsername() + ", item : " + request.getItemId());
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
 		}
 		Cart cart = user.getCart();
 		IntStream.range(0, request.getQuantity())
 			.forEach(i -> cart.addItem(item.get()));
 		cartRepository.save(cart);
+		logger.info("ADD_CART successfully: " + request.getUsername() + ", cart: " + cart.getId());
 		return ResponseEntity.ok(cart);
 	}
 	
 	@PostMapping("/removeFromCart")
 	public ResponseEntity<Cart> removeFromcart(@RequestBody ModifyCartRequest request) {
+		logger.info("REMOVE_CART entering: " + request.getUsername());
 		User user = userRepository.findByUsername(request.getUsername());
 		if(user == null) {
+			logger.error("REMOVE_CART ERROR username not found" + user.getUsername());
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
 		}
 		Optional<Item> item = itemRepository.findById(request.getItemId());
 		if(!item.isPresent()) {
+			logger.error("REMOVE_CART ERROR item not found " + user.getUsername() + ", item : " + request.getItemId());
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
 		}
 		Cart cart = user.getCart();
 		IntStream.range(0, request.getQuantity())
 			.forEach(i -> cart.removeItem(item.get()));
 		cartRepository.save(cart);
+		logger.info("REMOVE_CART successfully: " + request.getUsername() + ", cart: " + cart.getId());
 		return ResponseEntity.ok(cart);
 	}
 		
